@@ -233,18 +233,20 @@ public class PhotoViewAttacher implements View.OnTouchListener,
                     float scale = getScale();
                     float x = ev.getX();
                     float y = ev.getY();
-                    if (scale < getMediumScale()) {
-                        setScale(getMediumScale(), x, y, true);
-                    } else if (scale >= getMediumScale() && scale < getMaximumScale()) {
-                        setScale(getMaximumScale(), x, y, true);
-                    } else {
+
+                    if (scale > getMinimumScale()) {
+                        // 如果当前缩放级别大于最小缩放级别，双击后恢复到最小缩放级别
                         setScale(getMinimumScale(), x, y, true);
+                    } else {
+                        // 否则，双击后放大到“中等”缩放级别
+                        setScale(getMediumScale(), x, y, true);
                     }
                 } catch (ArrayIndexOutOfBoundsException e) {
                     // Can sometimes happen when getX() and getY() is called
                 }
                 return true;
             }
+
 
             @Override
             public boolean onDoubleTapEvent(MotionEvent e) {
