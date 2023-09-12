@@ -53,7 +53,6 @@ public class PhotoViewAttacher implements View.OnTouchListener,
     private static final int VERTICAL_EDGE_BOTTOM = 1;
     private static final int VERTICAL_EDGE_BOTH = 2;
     private static int SINGLE_TOUCH = 1;
-
     private Interpolator mInterpolator = new AccelerateDecelerateInterpolator();
     private int mZoomDuration = DEFAULT_ZOOM_DURATION;
     private float mMinScale = DEFAULT_MIN_SCALE;
@@ -149,6 +148,12 @@ public class PhotoViewAttacher implements View.OnTouchListener,
 
         @Override
         public void onScale(float scaleFactor, float focusX, float focusY, float dx, float dy) {
+            float currentScale = getScale();
+            float minScale = getMinimumScale();
+            if (currentScale < minScale && scaleFactor < 1) {
+                // 在这里应用阻尼
+                scaleFactor = (scaleFactor - 1) * 0.55f + 1;
+            }
             if (getScale() < mMaxScale || scaleFactor < 1f) {
                 if (mScaleChangeListener != null) {
                     mScaleChangeListener.onScaleChange(scaleFactor, focusX, focusY);
@@ -169,7 +174,7 @@ public class PhotoViewAttacher implements View.OnTouchListener,
         }
         mBaseRotation = 0.0f;
         // Create Gesture Detectors...
-        mScaleDragDetector = new CustomGestureDetector(imageView.getContext(), onGestureListener);
+        mScaleDragDetector = new CustomGestureDetector(imageView.getContext(), onGestureListener,this);
         mGestureDetector = new GestureDetector(imageView.getContext(), new GestureDetector.SimpleOnGestureListener() {
 
             // forward long click listener
@@ -235,10 +240,8 @@ public class PhotoViewAttacher implements View.OnTouchListener,
                     float y = ev.getY();
 
                     if (scale > getMinimumScale()) {
-                        // 如果当前缩放级别大于最小缩放级别，双击后恢复到最小缩放级别
                         setScale(getMinimumScale(), x, y, true);
                     } else {
-                        // 否则，双击后放大到“中等”缩放级别
                         setScale(getMediumScale(), x, y, true);
                     }
                 } catch (ArrayIndexOutOfBoundsException e) {
@@ -341,7 +344,7 @@ public class PhotoViewAttacher implements View.OnTouchListener,
     public boolean onTouch(View v, MotionEvent ev) {
         boolean handled = false;
         if (mZoomEnabled && Util.hasDrawable((ImageView) v)) {
-            switch (ev.getAction()) {
+            switch (ev.getActionMasked()) {
                 case MotionEvent.ACTION_DOWN:
                     ViewParent parent = v.getParent();
                     // First, disable the Parent from intercepting the touch
@@ -355,8 +358,10 @@ public class PhotoViewAttacher implements View.OnTouchListener,
                     break;
                 case MotionEvent.ACTION_CANCEL:
                 case MotionEvent.ACTION_UP:
+                    mImageView.getParent().requestDisallowInterceptTouchEvent(false);
                     // If the user has zoomed less than min scale, zoom back
                     // to min scale
+                    mImageView.getParent().requestDisallowInterceptTouchEvent(false);
                     if (getScale() < mMinScale) {
                         RectF rect = getDisplayRect();
                         if (rect != null) {
@@ -821,5 +826,8 @@ public class PhotoViewAttacher implements View.OnTouchListener,
                 Compat.postOnAnimation(mImageView, this);
             }
         }
+    }
+    public ImageView getImageView(){
+        return mImageView;
     }
 }

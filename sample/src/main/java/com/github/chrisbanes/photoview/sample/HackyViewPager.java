@@ -31,10 +31,18 @@ public class HackyViewPager extends ViewPager {
 
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
-		try {
-			return super.onInterceptTouchEvent(ev);
-		} catch (IllegalArgumentException e) {
-			return false;
-		}
+        int pointerCount = ev.getPointerCount(); // 获取触点个数
+
+        // 如果有多于一个触点，则不拦截触摸事件。
+        if (pointerCount > 1) {
+            return false;
+        }
+
+        // 其他情况，保持默认行为。
+        try {
+            return super.onInterceptTouchEvent(ev);
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
     }
 }

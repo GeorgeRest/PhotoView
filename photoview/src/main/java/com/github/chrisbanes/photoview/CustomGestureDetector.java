@@ -20,6 +20,7 @@ import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.VelocityTracker;
 import android.view.ViewConfiguration;
+import android.widget.ImageView;
 
 /**
  * Does a whole lot of gesture detecting.
@@ -27,10 +28,12 @@ import android.view.ViewConfiguration;
 class CustomGestureDetector {
 
     private static final int INVALID_POINTER_ID = -1;
+    private final ImageView imageView;
 
     private int mActivePointerId = INVALID_POINTER_ID;
     private int mActivePointerIndex = 0;
     private final ScaleGestureDetector mDetector;
+    private PhotoViewAttacher mPhotoViewAttacher;
 
     private VelocityTracker mVelocityTracker;
     private boolean mIsDragging;
@@ -40,23 +43,23 @@ class CustomGestureDetector {
     private final float mMinimumVelocity;
     private OnGestureListener mListener;
 
-    CustomGestureDetector(Context context, OnGestureListener listener) {
+    CustomGestureDetector(Context context, OnGestureListener listener,PhotoViewAttacher photoViewAttacher) {
         final ViewConfiguration configuration = ViewConfiguration
                 .get(context);
         mMinimumVelocity = configuration.getScaledMinimumFlingVelocity();
         mTouchSlop = configuration.getScaledTouchSlop();
-
+        mPhotoViewAttacher=photoViewAttacher;
         mListener = listener;
+        imageView = mPhotoViewAttacher.getImageView();
         ScaleGestureDetector.OnScaleGestureListener mScaleListener = new ScaleGestureDetector.OnScaleGestureListener() {
             private float lastFocusX, lastFocusY = 0;
 
             @Override
             public boolean onScale(ScaleGestureDetector detector) {
                 float scaleFactor = detector.getScaleFactor();
-
                 if (Float.isNaN(scaleFactor) || Float.isInfinite(scaleFactor))
                     return false;
-             
+
                 if (scaleFactor >= 0) {
                     mListener.onScale(scaleFactor,
                             detector.getFocusX(),
@@ -70,6 +73,7 @@ class CustomGestureDetector {
                 return true;
             }
 
+
             @Override
             public boolean onScaleBegin(ScaleGestureDetector detector) {
                 lastFocusX = detector.getFocusX();
@@ -79,7 +83,6 @@ class CustomGestureDetector {
 
             @Override
             public void onScaleEnd(ScaleGestureDetector detector) {
-                // NO-OP
             }
         };
         mDetector = new ScaleGestureDetector(context, mScaleListener);

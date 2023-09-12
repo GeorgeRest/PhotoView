@@ -28,18 +28,60 @@ import androidx.viewpager.widget.PagerAdapter;
 import androidx.viewpager.widget.ViewPager;
 
 public class ViewPagerActivity extends AppCompatActivity {
+    PhotoView[] photoViews;
+    private SamplePagerAdapter adapter;
+    private int tempPreviousPosition = -1;
+    private boolean isFirstPage = true;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_view_pager);
         ViewPager viewPager = findViewById(R.id.view_pager);
-        viewPager.setAdapter(new SamplePagerAdapter());
+        adapter = new SamplePagerAdapter();
+        viewPager.setAdapter(adapter);
+        photoViews = new PhotoView[adapter.getCount()];
+        viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+            private int currentPosition = -1;
+            boolean needToResetPrevious = false;
+
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+
+            }
+
+            @Override
+            public void onPageSelected(int position) {
+                if (isFirstPage) {
+                    tempPreviousPosition = 0;  // 设置为第一页
+                    isFirstPage = false;  // 标志置为false，后续不再执行这个逻辑
+                } else {
+                    if (currentPosition >= 0) {
+                        tempPreviousPosition = currentPosition;
+                    }
+                }
+                currentPosition = position;
+                System.out.println("onPageSelected position------------------- = " + position);
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int state) {
+                System.out.println("onPageScrollStateChanged state------------------- = " + state);
+                if (state == ViewPager.SCROLL_STATE_IDLE && tempPreviousPosition >= 0) {
+                    PhotoView previousPhotoView = photoViews[tempPreviousPosition];
+                    System.out.println("onPageScrollStateChanged tempPreviousPosition------------------- = " + tempPreviousPosition);
+                    if (previousPhotoView != null) {
+                        previousPhotoView.setScale(1.0f, false);
+                    }
+                    tempPreviousPosition = -1; // 重置临时变量
+                }
+            }
+        });
     }
 
-    static class SamplePagerAdapter extends PagerAdapter {
+    class SamplePagerAdapter extends PagerAdapter {
 
-        private static final int[] sDrawables = {R.drawable.wallpaper, R.drawable.wallpaper, R.drawable.wallpaper,
+        private final int[] sDrawables = {R.drawable.wallpaper, R.drawable.wallpaper, R.drawable.wallpaper,
             R.drawable.wallpaper, R.drawable.wallpaper, R.drawable.wallpaper};
 
         @Override
@@ -53,6 +95,7 @@ public class ViewPagerActivity extends AppCompatActivity {
             photoView.setImageResource(sDrawables[position]);
             // Now just add PhotoView to ViewPager and return it
             container.addView(photoView, LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
+            photoViews[position] = photoView;
             return photoView;
         }
 
